@@ -4,33 +4,38 @@ This checklist does not require any Swift knowledge. Run through it after
 each stage that touches the relevant area; not every item applies to every
 stage yet (see notes).
 
-## Stage 3: word capture (in progress)
+## Stage 3: word capture
 
 - [x] Selecting a word in Chrome and pressing the hotkey saves it (via
       Accessibility; no surrounding sentence is extracted for web page
       selections — expected, see below).
 - [x] Selecting a word in Preview (PDF) and pressing the hotkey saves it.
+- [x] Selecting a word in Safari and pressing the hotkey saves it.
+- [x] Selecting a word in IntelliJ IDEA and pressing the hotkey saves it.
 - [ ] Selecting a word in Terminal and pressing the hotkey does **not**
       currently save anything — neither Accessibility nor the clipboard
       fallback find a selection there. **Known issue, deliberately
       postponed**: suspected cause is Terminal's "Secure Keyboard Entry"
       setting, which can block both synthetic keystrokes and Accessibility
       reads app-wide. Revisit before calling this stage done.
-- [ ] Selecting a word in Safari and pressing the hotkey saves it.
-- [ ] Selecting a word in IntelliJ IDEA and pressing the hotkey saves it.
-- [ ] Saving the same word twice increases its repeat count instead of
+- [x] Saving the same word twice increases its repeat count instead of
       creating a duplicate row (verified via `sqlite3`).
-- [ ] Selecting a very long piece of text is rejected (nothing saved; no
-      visible feedback yet — that's stage 4).
-- [ ] Accessibility permission: revoking it in System Settings and trying
+- [x] Selecting a very long piece of text is rejected (nothing saved; no
+      visible feedback yet — that's stage 4). Confirmed via `log stream`
+      showing "Selection rejected: too much text."
+- [x] Accessibility permission: revoking it in System Settings and trying
       the hotkey shows the explanation dialog with a button to open System
       Settings.
-- [ ] Selecting text inside a password field and pressing the hotkey does
-      **not** save or show anything containing the password.
-- [ ] Pressing the hotkey repeatedly (50+ times in a row) does not cause
-      Vocabyte's memory usage (Activity Monitor) to keep climbing.
-- [ ] With no selection and no hotkey activity, Vocabyte's CPU usage in
-      Activity Monitor stays at ~0%.
+- [x] Selecting text inside a password field and pressing the hotkey does
+      **not** save or show anything containing the password — confirmed via
+      `log stream` showing "Nothing selected." (the secure field hides its
+      content from the Accessibility API, as expected).
+- [x] Pressing the hotkey repeatedly (50+ times in a row) does not cause
+      Vocabyte's memory usage to keep climbing — measured directly via
+      `ps`: 85.0 MB before, 85.7 MB after 50 presses (~0.7 MB, one-off, not
+      proportional to the number of presses).
+- [x] With no selection and no hotkey activity, Vocabyte's CPU usage stays
+      at ~0% (confirmed via `ps` alongside the memory check above).
 
 Check progress so far with:
 ```
