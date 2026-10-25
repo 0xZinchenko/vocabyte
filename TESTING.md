@@ -52,3 +52,15 @@ them are not implemented yet, so skip them for now:
       briefly near the edge of the screen and disappears on its own.
 - [ ] The save confirmation still appears when a fullscreen app or a
       different Space is active.
+- [ ] Selecting text inside a password field and pressing the hotkey does
+      **not** save or show anything containing the password (macOS secure
+      text fields are expected to hide their content from the Accessibility
+      API; confirm this holds in practice, e.g. in Safari's or System
+      Settings' password fields).
+- [ ] Pressing the hotkey repeatedly (50+ times in a row) does not cause
+      Vocabyte's memory usage (Activity Monitor) to keep climbing — it
+      should return close to its baseline between presses, not grow
+      unbounded.
+- [ ] With no selection and no hotkey activity, Vocabyte's CPU usage in
+      Activity Monitor stays at ~0% (it should only do work when the hotkey
+      is pressed or a window is open).
