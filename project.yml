@@ -4,6 +4,9 @@ packages:
   GRDB:
     url: https://github.com/groue/GRDB.swift.git
     exactVersion: 6.29.3
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts.git
+    exactVersion: 2.3.0
 
 options:
   deploymentTarget:
@@ -28,6 +31,7 @@ targets:
       - path: Sources/Vocabyte
     dependencies:
       - package: GRDB
+      - package: KeyboardShortcuts
     info:
       path: Sources/Vocabyte/Info.plist
       properties:

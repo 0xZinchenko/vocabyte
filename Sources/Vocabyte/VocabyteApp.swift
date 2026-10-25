@@ -1,7 +1,14 @@
+import KeyboardShortcuts
 import SwiftUI
 
 @main
 struct VocabyteApp: App {
+    init() {
+        KeyboardShortcuts.onKeyUp(for: .saveSelectedWord) {
+            WordCaptureCoordinator.shared.handleHotkeyPress()
+        }
+    }
+
     var body: some Scene {
         MenuBarExtra("Vocabyte", systemImage: "character.book.closed") {
             Button("Открыть список") {
