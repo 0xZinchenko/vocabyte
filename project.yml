@@ -3,7 +3,7 @@ name: Vocabyte
 packages:
   GRDB:
     url: https://github.com/groue/GRDB.swift.git
-    from: 6.29.0
+    exactVersion: 6.29.3
 
 options:
   deploymentTarget:
@@ -13,11 +13,11 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "13.0"
-    # Ad-hoc signing for local development builds. Switch to Manual signing
-    # with DEVELOPMENT_TEAM set once a free Apple Development certificate
-    # is available (needed for stable Accessibility permission grants).
-    CODE_SIGN_STYLE: Manual
-    CODE_SIGN_IDENTITY: "-"
+    # Signed with the developer's free Apple Development certificate
+    # (Personal Team), not ad-hoc: this makes macOS reset the Accessibility
+    # permission less often across rebuilds than ad-hoc signing does.
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: K2UG27C83R
     ENABLE_HARDENED_RUNTIME: YES
 
 targets:

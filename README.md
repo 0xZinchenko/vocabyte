@@ -10,8 +10,18 @@ on your Mac.
 
 ## Status
 
-Early development. This README will grow as each stage lands. Current stage:
-project scaffold (empty menu bar app, no hotkey capture or storage yet).
+Early development. This README will grow as each stage lands.
+
+Done so far:
+- Menu bar app shell (no Dock icon), builds and runs.
+- Local SQLite database (GRDB): schema, migrations, word normalization,
+  and case-insensitive deduplication by word/phrase.
+
+Not yet implemented: hotkey-driven capture of the selected text, the save
+confirmation panel, dictionary/translation lookups, the word list window,
+CSV export, and the Settings window. Several README sections below (API
+limits, the "Обновить" button, the Settings permission status) describe
+*planned* behavior for those stages, not something you can try yet.
 
 ## Requirements
 
@@ -51,23 +61,17 @@ The default bundle identifier is `com.example.Vocabyte`, set in `project.yml`
 under `targets.Vocabyte.settings.base.PRODUCT_BUNDLE_IDENTIFIER`. Change it
 there if you plan to keep Accessibility permissions across machines.
 
-Local builds currently use **ad-hoc signing** (`CODE_SIGN_IDENTITY: "-"`, no
-Apple Developer account required). This is enough to build and run the app,
-but macOS can reset the Accessibility permission (see below) more often with
-ad-hoc signing than with a real signing identity.
+Local builds are signed with a free **Apple Development** certificate
+(`CODE_SIGN_STYLE: Automatic`, `DEVELOPMENT_TEAM` set in `project.yml`) rather
+than ad-hoc signing, because this makes macOS reset the Accessibility
+permission (see below) less often across rebuilds.
 
-To reduce how often that happens, sign with a free **Apple Development**
-certificate instead:
+To use your own Apple ID instead of the one already configured:
 
 1. In Xcode: **Xcode → Settings → Accounts → + → Apple ID**, sign in with any
    Apple ID (no paid Developer Program membership needed).
 2. Note your **Team ID** shown next to the account.
-3. In `project.yml`, change the signing settings to:
-   ```yaml
-   CODE_SIGN_STYLE: Automatic
-   DEVELOPMENT_TEAM: "<your Team ID>"
-   ```
-   and remove the `CODE_SIGN_IDENTITY: "-"` line.
+3. In `project.yml`, replace `DEVELOPMENT_TEAM` with your own Team ID.
 4. Run `xcodegen generate` again.
 
 Even with a real signing identity, macOS is not guaranteed to preserve the
@@ -81,10 +85,9 @@ API, which requires you to grant it permission once:
 
 **System Settings → Privacy & Security → Accessibility** → enable Vocabyte.
 
-If the permission disappears after a rebuild (common with ad-hoc signing),
-just re-enable it the same way. The app's Settings window shows the current
-permission status and a shortcut to this System Settings pane (added in a
-later stage).
+If the permission disappears after a rebuild, just re-enable it the same way.
+The app's Settings window will show the current permission status and a
+shortcut to this System Settings pane (planned for a later stage).
 
 ## External services and their limits
 
@@ -107,6 +110,11 @@ locally and is retried later (on next launch or via the "Обновить" butto
 - No notarization/distribution signing at this stage — this is a local
   development build only.
 - No telemetry, analytics, or network calls beyond the two APIs above.
+- Normalization only checks word/phrase count, length, and line breaks — it
+  does not try to detect "this looks like code" (e.g. `x = 1;`) or filter out
+  non-English text. Both would need heuristics prone to false positives, with
+  no precise rule given by the spec, so this was deliberately left out rather
+  than guessed at.
 
 ## License
 

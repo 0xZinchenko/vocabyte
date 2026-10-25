@@ -50,7 +50,10 @@ final class DatabaseManager {
                 t.column("sentence", .text)
                 t.column("count", .integer).notNull().defaults(to: 1)
                 t.column("learned", .boolean).notNull().defaults(to: false)
-                t.column("lookupStatus", .text).notNull().defaults(to: LookupStatus.pending.rawValue)
+                // Spelled out literally, not via LookupStatus.pending.rawValue:
+                // this migration must keep producing the same schema forever,
+                // even if the enum is later renamed.
+                t.column("lookupStatus", .text).notNull().defaults(to: "pending")
                 t.column("createdAt", .datetime).notNull()
                 t.column("updatedAt", .datetime).notNull()
             }
@@ -59,16 +62,22 @@ final class DatabaseManager {
     }
 
     /// Saves a normalized word, deduplicating by `normalizedWord`: a repeat
-    /// bumps `count` and `updatedAt` instead of creating a new row.
+    /// bumps `count` and `updatedAt` instead of creating a new row. If the
+    /// word was saved before without a sentence and one is available now,
+    /// it's filled in — but an existing sentence is never overwritten.
     @discardableResult
     func saveWord(displayWord: String, normalizedWord: String, sentence: String?) throws -> SaveResult {
-        try dbQueue.write { db in
+        let now = Date()
+        return try dbQueue.write { db in
             if var existing = try Word
                 .filter(Column("normalizedWord") == normalizedWord)
                 .fetchOne(db)
             {
                 existing.count += 1
-                existing.updatedAt = Date()
+                existing.updatedAt = now
+                if existing.sentence == nil || existing.sentence?.isEmpty == true {
+                    existing.sentence = sentence
+                }
                 try existing.update(db)
                 return .incremented(count: existing.count)
             }
@@ -85,8 +94,8 @@ final class DatabaseManager {
                 count: 1,
                 learned: false,
                 lookupStatus: .pending,
-                createdAt: Date(),
-                updatedAt: Date()
+                createdAt: now,
+                updatedAt: now
             )
             try word.insert(db)
             return .created

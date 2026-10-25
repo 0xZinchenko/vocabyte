@@ -92,4 +92,55 @@ final class WordNormalizerTests: XCTestCase {
         }
         XCTAssertEqual(display, "Apple")
     }
+
+    // MARK: - Regressions found in review
+
+    func testWindowsStyleLineBreakIsRejected() {
+        // "\r\n" is a single Character in Swift, so a naive "\n"/"\r"
+        // substring check misses it entirely.
+        XCTAssertEqual(WordNormalizer.normalize("hello\r\nworld"), .tooMuchText)
+    }
+
+    func testUnicodeLineSeparatorIsRejected() {
+        XCTAssertEqual(WordNormalizer.normalize("hello\u{2028}world"), .tooMuchText)
+    }
+
+    func testDoubleSpaceCollapsesToSingleSpaceInKey() {
+        guard case .accepted(let display, let normalized) = WordNormalizer.normalize("get  rid of") else {
+            return XCTFail("expected acceptance")
+        }
+        XCTAssertEqual(normalized, "get rid of")
+        XCTAssertEqual(display, "get  rid of", "the visible text keeps the exact whitespace it was selected with")
+    }
+
+    func testNonBreakingSpaceDedupesWithRegularSpace() {
+        guard case .accepted(_, let withNBSP) = WordNormalizer.normalize("get\u{00A0}rid of") else {
+            return XCTFail("expected acceptance")
+        }
+        guard case .accepted(_, let withRegularSpace) = WordNormalizer.normalize("get rid of") else {
+            return XCTFail("expected acceptance")
+        }
+        XCTAssertEqual(withNBSP, withRegularSpace)
+    }
+
+    func testParenthesizedCallExpressionIsKeptWhole() {
+        // Brackets are not edge-trimmed, so a one-sided strip can no longer
+        // mangle this into "getOrDefault(key".
+        XCTAssertEqual(
+            WordNormalizer.normalize("getOrDefault(key)"),
+            .accepted(displayWord: "getOrDefault(key)", normalizedWord: "getordefault(key)")
+        )
+    }
+
+    func testDecomposedAndPrecomposedAccentsDedupeTogether() {
+        let precomposed = "café" // single scalar é (U+00E9)
+        let decomposed = "cafe\u{0301}" // "e" + combining acute accent
+        guard case .accepted(_, let key1) = WordNormalizer.normalize(precomposed) else {
+            return XCTFail("expected acceptance")
+        }
+        guard case .accepted(_, let key2) = WordNormalizer.normalize(decomposed) else {
+            return XCTFail("expected acceptance")
+        }
+        XCTAssertEqual(key1, key2)
+    }
 }
