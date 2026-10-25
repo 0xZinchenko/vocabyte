@@ -4,7 +4,18 @@ This checklist does not require any Swift knowledge. Run through it after
 each stage that touches the relevant area; not every item applies to every
 stage yet (see notes).
 
-## Current stage: project scaffold
+## Stage 2: local database
+
+No manual steps yet — this stage has no UI. Verified by the automated test
+suite (`xcodebuild ... test`), which covers:
+
+- Normalization: word/phrase length limits, rejecting multi-line or overly
+  long selections, trimming edge punctuation, keeping internal
+  apostrophes/hyphens, case-insensitive deduplication key.
+- Database: saving a new word, repeat saves incrementing the counter instead
+  of creating duplicate rows, and that the originally saved casing is kept.
+
+## Stage 1: project scaffold
 
 - [ ] `xcodegen generate` completes without errors.
 - [ ] The app builds via `xcodebuild ... build`.

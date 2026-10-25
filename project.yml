@@ -1,5 +1,10 @@
 name: Vocabyte
 
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift.git
+    from: 6.29.0
+
 options:
   deploymentTarget:
     macOS: "13.0"
@@ -21,6 +26,8 @@ targets:
     platform: macOS
     sources:
       - path: Sources/Vocabyte
+    dependencies:
+      - package: GRDB
     info:
       path: Sources/Vocabyte/Info.plist
       properties:
@@ -42,6 +49,7 @@ targets:
       - path: Tests/VocabyteTests
     dependencies:
       - target: Vocabyte
+      - package: GRDB
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.VocabyteTests
