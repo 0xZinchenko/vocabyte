@@ -73,11 +73,11 @@ them are not implemented yet, so skip them for now:
 
 - [ ] With no network connection, saving still works locally; translation
       and transcription appear later once the network is back (use
-      "Обновить").
+      "Refresh").
 - [ ] Changing the translation language in Settings affects new lookups.
 - [ ] Exporting to CSV produces a file that opens correctly in Excel,
       including Cyrillic text.
-- [ ] The save confirmation ("Сохранено" / "Уже было, N-й раз") appears
+- [ ] The save confirmation ("Saved: ..." / "Already saved ×N") appears
       briefly near the edge of the screen and disappears on its own.
 - [ ] The save confirmation still appears when a fullscreen app or a
       different Space is active.

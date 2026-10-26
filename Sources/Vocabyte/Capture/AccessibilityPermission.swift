@@ -14,16 +14,16 @@ enum AccessibilityPermission {
         guard !isGranted else { return true }
 
         let alert = NSAlert()
-        alert.messageText = "Нужен доступ к Accessibility"
+        alert.messageText = "Accessibility access needed"
         alert.informativeText = """
-        Vocabyte читает выделенный текст в других приложениях через системный \
-        Accessibility API — только так можно сохранить слово по горячей клавише. \
-        Больше это разрешение ни для чего не используется.
+        Vocabyte reads the selected text in other apps through the system \
+        Accessibility API — that's the only way to save a word with the \
+        hotkey. This permission isn't used for anything else.
 
-        Выдать его можно в Системных настройках.
+        You can grant it in System Settings.
         """
-        alert.addButton(withTitle: "Открыть настройки")
-        alert.addButton(withTitle: "Отмена")
+        alert.addButton(withTitle: "Open Settings")
+        alert.addButton(withTitle: "Cancel")
 
         if alert.runModal() == .alertFirstButtonReturn {
             openSystemSettings()
