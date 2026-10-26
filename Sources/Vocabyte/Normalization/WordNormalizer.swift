@@ -2,9 +2,11 @@ import Foundation
 
 /// Result of normalizing a raw text selection before it's considered for saving.
 enum NormalizationResult: Equatable {
-    /// Accepted. `displayWord` keeps the original casing/text for showing in
-    /// the UI; `normalizedWord` is the lowercase, apostrophe-unified key used
-    /// for deduplication.
+    /// Accepted. `displayWord` is lowercased for a consistent look in the
+    /// word list (a vocabulary list reads better uniform than mixed-case,
+    /// and the original-case sentence is kept separately for context);
+    /// `normalizedWord` is the same text with whitespace/apostrophes
+    /// further unified, used as the deduplication key.
     case accepted(displayWord: String, normalizedWord: String)
     /// Nothing usable was left after trimming (e.g. the selection was only
     /// whitespace or punctuation).
@@ -34,9 +36,13 @@ enum WordNormalizer {
     }()
 
     static func normalize(_ raw: String) -> NormalizationResult {
-        // Canonical composition first (e.g. "é" as one scalar vs. "e" + combining
-        // accent) so visually identical text always normalizes to the same key.
-        let composed = raw.precomposedStringWithCanonicalMapping
+        // Compatibility composition (NFKC), not just canonical (NFC): this
+        // also folds visually-styled Unicode (e.g. the "Mathematical
+        // Alphanumeric Symbols" block some sites/PDFs use for bold/italic
+        // text, like "𝑩𝒆𝒈𝒊𝒏𝒏𝒆𝒓") down to plain Latin letters, in addition to
+        // composing accents like "é". Without this, such text dedupes as a
+        // different word and both external APIs fail on it.
+        let composed = raw.precomposedStringWithCompatibilityMapping
         let trimmed = composed.trimmingCharacters(in: edgeTrimCharacterSet)
 
         guard !trimmed.isEmpty else {
@@ -64,6 +70,6 @@ enum WordNormalizer {
             .replacingOccurrences(of: "\u{2019}", with: "'")
             .replacingOccurrences(of: "\u{2018}", with: "'")
 
-        return .accepted(displayWord: trimmed, normalizedWord: normalizedWord)
+        return .accepted(displayWord: trimmed.lowercased(), normalizedWord: normalizedWord)
     }
 }

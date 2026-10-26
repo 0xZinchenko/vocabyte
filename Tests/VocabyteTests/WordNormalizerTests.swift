@@ -65,7 +65,7 @@ final class WordNormalizerTests: XCTestCase {
     func testIdentifierIsNotSplit() {
         XCTAssertEqual(
             WordNormalizer.normalize("getOrDefault"),
-            .accepted(displayWord: "getOrDefault", normalizedWord: "getordefault")
+            .accepted(displayWord: "getordefault", normalizedWord: "getordefault")
         )
     }
 
@@ -86,11 +86,13 @@ final class WordNormalizerTests: XCTestCase {
         XCTAssertEqual(lower, upper)
     }
 
-    func testDisplayWordPreservesOriginalCasing() {
+    func testDisplayWordIsLowercased() {
+        // Deliberate: a vocabulary list reads better with a consistent
+        // case than mixed-case text copied from wherever it was selected.
         guard case .accepted(let display, _) = WordNormalizer.normalize("Apple") else {
             return XCTFail("expected acceptance")
         }
-        XCTAssertEqual(display, "Apple")
+        XCTAssertEqual(display, "apple")
     }
 
     // MARK: - Regressions found in review
@@ -128,7 +130,22 @@ final class WordNormalizerTests: XCTestCase {
         // mangle this into "getOrDefault(key".
         XCTAssertEqual(
             WordNormalizer.normalize("getOrDefault(key)"),
-            .accepted(displayWord: "getOrDefault(key)", normalizedWord: "getordefault(key)")
+            .accepted(displayWord: "getordefault(key)", normalizedWord: "getordefault(key)")
+        )
+    }
+
+    func testStyledMathAlphanumericTextFoldsToPlainLatin() {
+        // Some sites/PDFs render bold/italic text using the Unicode
+        // "Mathematical Alphanumeric Symbols" block instead of actual bold
+        // or italic styling on plain letters - visually similar, but a
+        // completely different set of code points. Without folding this
+        // back to plain Latin, it dedupes as a different word and both
+        // external lookup APIs fail on it (observed in practice with
+        // "𝑩𝒆𝒈𝒊𝒏𝒏𝒆𝒓" - mathematical bold italic for "Beginner").
+        let styled = "\u{1D469}\u{1D486}\u{1D488}\u{1D48A}\u{1D48F}\u{1D48F}\u{1D486}\u{1D493}"
+        XCTAssertEqual(
+            WordNormalizer.normalize(styled),
+            .accepted(displayWord: "beginner", normalizedWord: "beginner")
         )
     }
 
