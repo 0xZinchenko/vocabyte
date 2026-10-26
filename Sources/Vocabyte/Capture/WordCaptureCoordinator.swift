@@ -55,12 +55,14 @@ final class WordCaptureCoordinator {
                 sentence: sentence.isEmpty ? nil : sentence
             )
             switch result {
-            case .created:
+            case .created(let id):
                 logger.notice("Saved new word: \(displayWord, privacy: .public)")
                 SaveFeedbackPanel.shared.show(message: "Saved: \(displayWord)")
-            case .incremented(let count):
+                Task { await WordLookupService.shared.lookup(wordId: id, text: displayWord) }
+            case .incremented(let id, let count):
                 logger.notice("Repeat save (\(count, privacy: .public)x): \(displayWord, privacy: .public)")
                 SaveFeedbackPanel.shared.show(message: "Already saved ×\(count)")
+                Task { await WordLookupService.shared.lookup(wordId: id, text: displayWord) }
             }
         } catch {
             logger.error("Failed to save word: \(error.localizedDescription, privacy: .public)")

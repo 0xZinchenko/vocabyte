@@ -4,6 +4,27 @@ This checklist does not require any Swift knowledge. Run through it after
 each stage that touches the relevant area; not every item applies to every
 stage yet (see notes).
 
+## Stage 5: dictionary and translation
+
+- [x] After saving a new word, phonetic transcription, part of speech, and
+      a Russian translation appear within a few seconds (confirmed via
+      `sqlite3`), and `lookupStatus` becomes `success`.
+- [x] A word the dictionary has no entry for (e.g. a less common inflected
+      form) still gets a translation and `lookupStatus = success` — a
+      missing dictionary entry alone doesn't block success.
+- [ ] With no network connection, saving still works locally; translation
+      and transcription appear later once the network is back. Not yet
+      manually tested (needs toggling network off/on); automated tests
+      cover the underlying retry logic (`WordLookupServiceTests`).
+- [ ] Manual retry ("Refresh") isn't wired to any UI yet — the method
+      exists (`WordLookupService.refreshPending()`) but there's no button
+      until the word list (stage 6) exists.
+
+Check progress so far with:
+```
+sqlite3 ~/Library/Application\ Support/Vocabyte/words.sqlite "select displayWord, phonetic, partOfSpeech, translation, lookupStatus from word order by rowid desc limit 5;"
+```
+
 ## Stage 3: word capture
 
 - [x] Selecting a word in Chrome and pressing the hotkey saves it (via
@@ -71,9 +92,6 @@ The items below describe the full checklist for the finished first version
 of Vocabyte. They will be filled in and checked off stage by stage — most of
 them are not implemented yet, so skip them for now:
 
-- [ ] With no network connection, saving still works locally; translation
-      and transcription appear later once the network is back (use
-      "Refresh").
 - [ ] Changing the translation language in Settings affects new lookups.
 - [ ] Exporting to CSV produces a file that opens correctly in Excel,
       including Cyrillic text.

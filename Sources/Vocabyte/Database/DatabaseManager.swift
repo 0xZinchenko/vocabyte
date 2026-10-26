@@ -2,10 +2,11 @@ import Foundation
 import GRDB
 
 /// Outcome of saving a word, so callers (e.g. the save confirmation panel)
-/// know whether this was a brand new word or a repeat.
+/// know whether this was a brand new word or a repeat. `id` lets the caller
+/// kick off a background dictionary/translation lookup for this row.
 enum SaveResult: Equatable {
-    case created
-    case incremented(count: Int)
+    case created(id: Int64)
+    case incremented(id: Int64, count: Int)
 }
 
 final class DatabaseManager {
@@ -79,7 +80,7 @@ final class DatabaseManager {
                     existing.sentence = sentence
                 }
                 try existing.update(db)
-                return .incremented(count: existing.count)
+                return .incremented(id: existing.id!, count: existing.count)
             }
 
             var word = Word(
@@ -98,7 +99,63 @@ final class DatabaseManager {
                 updatedAt: now
             )
             try word.insert(db)
-            return .created
+            return .created(id: word.id!)
+        }
+    }
+
+    func word(withId id: Int64) throws -> Word? {
+        try dbQueue.read { db in
+            try Word.filter(Column("id") == id).fetchOne(db)
+        }
+    }
+
+    /// Words whose translation hasn't been fetched successfully yet —
+    /// `pending` (never tried) or `failed` (tried and hit a network/API
+    /// error). Dictionary data (phonetic/part of speech) is best-effort and
+    /// doesn't affect this list; see `recordLookupResult`.
+    func wordsNeedingLookup() throws -> [Word] {
+        try dbQueue.read { db in
+            try Word.filter(Column("lookupStatus") != LookupStatus.success).fetchAll(db)
+        }
+    }
+
+    /// Records the outcome of a dictionary/translation lookup attempt.
+    ///
+    /// `phonetic`/`partOfSpeech` are only written when non-nil, so a retry
+    /// that fails to find dictionary data again doesn't erase data a
+    /// previous attempt already found. `translation` is only written when
+    /// `succeeded` is true, for the same reason — a failed retry never
+    /// erases a translation obtained earlier (which normally can't happen
+    /// anyway, since a word with a translation already has
+    /// `lookupStatus == .success` and isn't retried, but this keeps the
+    /// method safe to call either way).
+    func recordLookupResult(
+        wordId: Int64,
+        phonetic: String?,
+        partOfSpeech: String?,
+        translation: String?,
+        translationLang: String?,
+        succeeded: Bool
+    ) throws {
+        try dbQueue.write { db in
+            guard var word = try Word.filter(Column("id") == wordId).fetchOne(db) else {
+                return
+            }
+            if let phonetic {
+                word.phonetic = phonetic
+            }
+            if let partOfSpeech {
+                word.partOfSpeech = partOfSpeech
+            }
+            if succeeded {
+                if let translation {
+                    word.translation = translation
+                }
+                word.translationLang = translationLang
+            }
+            word.lookupStatus = succeeded ? .success : .failed
+            word.updatedAt = Date()
+            try word.update(db)
         }
     }
 }

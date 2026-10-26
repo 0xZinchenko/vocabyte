@@ -7,6 +7,7 @@ struct VocabyteApp: App {
         KeyboardShortcuts.onKeyUp(for: .saveSelectedWord) {
             WordCaptureCoordinator.shared.handleHotkeyPress()
         }
+        Task { await WordLookupService.shared.refreshPending() }
     }
 
     var body: some Scene {
