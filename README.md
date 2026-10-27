@@ -9,6 +9,18 @@ editable list.
 No server, no account, no sync — everything lives in a local SQLite database
 on your Mac.
 
+## Why
+
+Reading English technical books and documentation means constantly running
+into unfamiliar words — stopping to look each one up and write it down
+somewhere breaks the reading flow. Vocabyte exists to remove that friction:
+one hotkey press saves the word with its surrounding context, looks up the
+meaning in the background, and gets out of the way immediately.
+
+It deliberately does one thing well instead of trying to be a full
+flashcard/spaced-repetition app — export to CSV if you want to feed your
+list into something built for that.
+
 ## Features
 
 - **Global hotkey capture** — select a word or short phrase anywhere (web
