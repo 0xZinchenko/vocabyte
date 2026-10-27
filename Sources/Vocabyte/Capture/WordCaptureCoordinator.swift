@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import os
 
@@ -8,6 +9,31 @@ import os
 /// how this was tested before the panel existed.
 final class WordCaptureCoordinator {
     static let shared = WordCaptureCoordinator()
+
+    /// Terminal emulators are a known case where capture never works: their
+    /// content is custom-rendered, not a standard text view, so
+    /// Accessibility can't read a selection, and (at least for Terminal.app)
+    /// "Secure Keyboard Entry", when enabled, blocks the synthetic Cmd+C the
+    /// clipboard fallback relies on. Rather than chase a fix for what's
+    /// often a macOS security feature working as intended, this is called
+    /// out with its own message instead of the generic "Nothing selected" —
+    /// which would otherwise wrongly suggest the user just didn't select
+    /// anything.
+    ///
+    /// There's no API to ask "is this app a terminal emulator" — this is a
+    /// manually maintained list of the common ones, not exhaustive. An
+    /// unlisted terminal will fall back to the generic "Nothing selected"
+    /// message.
+    private static let unsupportedAppBundleIdentifiers: Set<String> = [
+        "com.apple.Terminal",
+        "com.googlecode.iterm2",
+        "dev.warp.Warp-Stable",
+        "com.mitchellh.ghostty",
+        "io.alacritty",
+        "net.kovidgoyal.kitty",
+        "com.github.wez.wezterm",
+        "co.zeit.hyper",
+    ]
 
     private let logger = Logger(subsystem: "com.example.Vocabyte", category: "capture")
     private let database: DatabaseManager?
@@ -29,8 +55,15 @@ final class WordCaptureCoordinator {
         }
 
         guard let captured = SelectionCaptureService.captureSelection() else {
-            logger.notice("Nothing selected.")
-            SaveFeedbackPanel.shared.show(message: "Nothing selected")
+            if let bundleId = NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
+               Self.unsupportedAppBundleIdentifiers.contains(bundleId)
+            {
+                logger.notice("Word capture isn't supported in this app (\(bundleId, privacy: .public)).")
+                SaveFeedbackPanel.shared.show(message: "Not supported in terminal apps")
+            } else {
+                logger.notice("Nothing selected.")
+                SaveFeedbackPanel.shared.show(message: "Nothing selected")
+            }
             return
         }
 

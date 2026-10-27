@@ -87,11 +87,13 @@ sqlite3 ~/Library/Application\ Support/Vocabyte/words.sqlite "select displayWord
 - [x] Selecting a word in Safari and pressing the hotkey saves it.
 - [x] Selecting a word in IntelliJ IDEA and pressing the hotkey saves it.
 - [ ] Selecting a word in Terminal and pressing the hotkey does **not**
-      currently save anything — neither Accessibility nor the clipboard
-      fallback find a selection there. **Known issue, deliberately
-      postponed**: suspected cause is Terminal's "Secure Keyboard Entry"
-      setting, which can block both synthetic keystrokes and Accessibility
-      reads app-wide. Revisit before calling this stage done.
+      save anything — neither Accessibility nor the clipboard fallback find
+      a selection there (Terminal's custom text rendering and, if enabled,
+      its "Secure Keyboard Entry" setting both block the usual capture
+      methods). **Accepted limitation, not planned to be fixed**: the
+      hotkey now shows "Not supported in Terminal" instead of the generic
+      "Nothing selected", so this is at least not confusing. Verify this
+      message appears when testing.
 - [x] Saving the same word twice increases its repeat count instead of
       creating a duplicate row (verified via `sqlite3`).
 - [x] Selecting a very long piece of text is rejected (nothing saved; no
