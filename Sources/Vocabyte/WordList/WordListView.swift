@@ -46,6 +46,8 @@ private struct WordNameCell: View {
 
             TextField("Word", text: $text)
                 .textFieldStyle(.plain)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(AppColor.textPrimary)
                 .onSubmit {
                     store.rename(word, to: text)
                 }
@@ -140,23 +142,40 @@ struct WordListView: View {
     /// zero-row `Table` with that modifier attached, rather than trying to
     /// work around the crash some other way.
     private var wordTable: some View {
+        // Native NSTableView-backed control: the header row and the
+        // selection-highlight color stay system-styled regardless of the
+        // app's theme — SwiftUI's Table doesn't expose a way to recolor
+        // those. Everything else below (content background, row text
+        // colors, no zebra striping) is restyled to match the palette.
         Table(visibleWords) {
             TableColumn("Word") { word in
                 WordNameCell(word: word, store: store)
             }
             TableColumn("Phonetic") { word in
                 Text(word.phonetic ?? "")
+                    .font(.system(size: 12))
+                    .italic()
+                    .foregroundStyle(AppColor.textSecondary)
             }
             TableColumn("Translation") { word in
                 Text(word.translation ?? "")
+                    .font(.system(size: 13))
+                    .foregroundStyle(AppColor.textPrimary)
             }
             TableColumn("Part of speech") { word in
                 Text(word.partOfSpeech ?? "")
+                    .font(.caption)
+                    .foregroundStyle(AppColor.textSecondary)
             }
             TableColumn("Count") { word in
                 Text("\(word.count)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(AppColor.textSecondary)
             }
         }
+        .tableStyle(.inset(alternatesRowBackgrounds: false))
+        .scrollContentBackground(.hidden)
+        .background(AppColor.background)
         .contextMenu(forSelectionType: Word.ID.self) { ids in
             Button("Delete", role: .destructive) {
                 for word in visibleWords where ids.contains(word.id) {
