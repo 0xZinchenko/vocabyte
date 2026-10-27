@@ -1,27 +1,34 @@
 # Vocabyte
 
-Vocabyte is a native macOS menu bar app for programmers who read English books
+Vocabyte is a native macOS menu-bar app for programmers who read English books
 and technical documentation. Press a global hotkey to save the selected word
 or phrase; Vocabyte looks it up in the background (phonetic transcription,
-part of speech, translation) and keeps everything in a local, searchable list.
+part of speech, translation) and keeps everything in a local, searchable,
+editable list.
 
 No server, no account, no sync — everything lives in a local SQLite database
 on your Mac.
 
-## Status
+## Features
 
-Early development. This README will grow as each stage lands.
-
-Done so far:
-- Menu bar app shell (no Dock icon), builds and runs.
-- Local SQLite database (GRDB): schema, migrations, word normalization,
-  and case-insensitive deduplication by word/phrase.
-
-Not yet implemented: hotkey-driven capture of the selected text, the save
-confirmation panel, dictionary/translation lookups, the word list window,
-CSV export, and the Settings window. Several README sections below (API
-limits, the "Обновить" button, the Settings permission status) describe
-*planned* behavior for those stages, not something you can try yet.
+- **Global hotkey capture** — select a word or short phrase anywhere (web
+  pages, PDFs, IDEs, most native apps) and press the hotkey to save it, with
+  the surrounding sentence kept for context where the source app exposes it.
+- **Background lookup** — phonetic transcription and part of speech (Free
+  Dictionary API) plus translation (MyMemory) are fetched automatically after
+  saving and retried on next launch if they failed.
+- **Word list window** — search, filter (All / Active / Learned), sort (date
+  captured / alphabetical / most frequent), mark words learned, edit a word's
+  text in place to fix a capture mistake, and delete entries.
+- **CSV export** — exports the full word list (word, phonetic, translation,
+  part of speech, sentence, repeat count, learned status, dates) with a
+  UTF-8 BOM so Cyrillic translations display correctly in Excel.
+- **Settings** — translation target language (Russian/Ukrainian), a
+  rebindable hotkey, launch-at-login, and an explicit light/dark appearance
+  toggle.
+- Repeat saves of the same word increment a counter instead of creating
+  duplicates; a dropped first selection fills in a missing sentence later
+  without overwriting one already saved.
 
 ## Requirements
 
@@ -55,6 +62,10 @@ xcodebuild -project Vocabyte.xcodeproj -scheme Vocabyte -configuration Debug tes
 Re-run `xcodegen generate` any time `project.yml` changes (new source files,
 new dependencies, new settings).
 
+A Debug build (the default above) carries extra debug overhead; build with
+`-configuration Release` for day-to-day use if you care about memory
+footprint.
+
 ## Bundle identifier and code signing
 
 The default bundle identifier is `com.example.Vocabyte`, set in `project.yml`
@@ -86,8 +97,23 @@ API, which requires you to grant it permission once:
 **System Settings → Privacy & Security → Accessibility** → enable Vocabyte.
 
 If the permission disappears after a rebuild, just re-enable it the same way.
-The app's Settings window will show the current permission status and a
-shortcut to this System Settings pane (planned for a later stage).
+
+Capture doesn't work in terminal emulators (Terminal.app, iTerm2, Warp,
+Ghostty, Alacritty, kitty, WezTerm, Hyper) — their custom-rendered text isn't
+exposed via Accessibility, and Terminal.app's "Secure Keyboard Entry", when
+enabled, also blocks the clipboard-based fallback. The hotkey shows "Not
+supported in terminal apps" in that case instead of failing silently.
+
+## Where your data lives
+
+- Database: `~/Library/Application Support/Vocabyte/words.sqlite` (SQLite,
+  readable with any SQLite browser or the `sqlite3` CLI).
+- Preferences (translation language, theme, hotkey, launch-at-login): macOS
+  `UserDefaults` for the app's bundle identifier.
+
+Nothing is synced or uploaded anywhere except the two lookup APIs below.
+Deleting a word in the app is permanent (no trash/undo) — use **Export to
+CSV…** in the word list window beforehand if you want a backup.
 
 ## External services and their limits
 
@@ -102,7 +128,7 @@ is already saved locally:
   heavy use.
 
 Both calls use an 8-second timeout. If a lookup fails, the word stays saved
-locally and is retried later (on next launch or via the "Обновить" button).
+locally and is retried automatically on next launch.
 
 ## Known technical trade-offs
 
@@ -115,6 +141,9 @@ locally and is retried later (on next launch or via the "Обновить" butto
   non-English text. Both would need heuristics prone to false positives, with
   no precise rule given by the spec, so this was deliberately left out rather
   than guessed at.
+- The word list's table header and row-selection highlight color follow the
+  system appearance rather than the app's own theme — SwiftUI's `Table`
+  doesn't expose a way to restyle those.
 
 ## License
 
