@@ -219,7 +219,7 @@ final class DatabaseManagerTests: XCTestCase {
 
     // MARK: - Word list
 
-    func testAllWordsOrdersByMostRecentlyUpdatedFirst() throws {
+    func testAllWordsOrdersByMostRecentlyCapturedFirst() throws {
         let db = try DatabaseManager.openInMemory()
         _ = try db.saveWord(displayWord: "apple", normalizedWord: "apple", sentence: nil)
         Thread.sleep(forTimeInterval: 0.01)
@@ -227,6 +227,23 @@ final class DatabaseManagerTests: XCTestCase {
 
         let words = try db.allWords()
         XCTAssertEqual(words.map(\.normalizedWord), ["banana", "apple"])
+    }
+
+    func testEditingAWordDoesNotChangeItsPositionInTheDefaultOrder() throws {
+        // Regression: the default order previously sorted by `updatedAt`,
+        // so correcting a word's text (or anything else that touches it)
+        // jumped it to the top of the list — confusing when all you did was
+        // fix a typo. It must sort by `createdAt` instead, which a rename
+        // doesn't change.
+        let db = try DatabaseManager.openInMemory()
+        let appleId = insertedId(try db.saveWord(displayWord: "apple", normalizedWord: "apple", sentence: nil))
+        Thread.sleep(forTimeInterval: 0.01)
+        _ = try db.saveWord(displayWord: "banana", normalizedWord: "banana", sentence: nil)
+
+        _ = try db.renameWord(id: appleId, displayWord: "apples", normalizedWord: "apples")
+
+        let words = try db.allWords()
+        XCTAssertEqual(words.map(\.displayWord), ["banana", "apples"], "apple's edit shouldn't move it ahead of banana")
     }
 
     func testSetLearnedTogglesFlagAndBumpsUpdatedAt() throws {

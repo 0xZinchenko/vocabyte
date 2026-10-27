@@ -81,7 +81,7 @@ struct WordListView: View {
 
         switch sort {
         case .dateAdded:
-            break // allWords() is already newest-updated first.
+            break // allWords() is already newest-captured first.
         case .alphabetical:
             words.sort { $0.displayWord.localizedCaseInsensitiveCompare($1.displayWord) == .orderedAscending }
         case .mostFrequent:
@@ -92,28 +92,11 @@ struct WordListView: View {
     }
 
     var body: some View {
-        Table(visibleWords) {
-            TableColumn("Word") { word in
-                WordNameCell(word: word, store: store)
-            }
-            TableColumn("Phonetic") { word in
-                Text(word.phonetic ?? "")
-            }
-            TableColumn("Translation") { word in
-                Text(word.translation ?? "")
-            }
-            TableColumn("Part of speech") { word in
-                Text(word.partOfSpeech ?? "")
-            }
-            TableColumn("Count") { word in
-                Text("\(word.count)")
-            }
-        }
-        .contextMenu(forSelectionType: Word.ID.self) { ids in
-            Button("Delete", role: .destructive) {
-                for word in visibleWords where ids.contains(word.id) {
-                    store.delete(word)
-                }
+        Group {
+            if visibleWords.isEmpty {
+                emptyState
+            } else {
+                wordTable
             }
         }
         .searchable(text: $searchText, prompt: "Search word or translation")
@@ -148,6 +131,51 @@ struct WordListView: View {
         } message: {
             Text(exportError ?? "")
         }
+    }
+
+    /// Kept out of the view tree entirely when `visibleWords` is empty — a
+    /// `Table` with zero rows crashes if right-clicked (SwiftUI/AppKit bug:
+    /// `.contextMenu(forSelectionType:)` can hand the underlying
+    /// `NSTableView` a row index of -1), so this avoids ever having a
+    /// zero-row `Table` with that modifier attached, rather than trying to
+    /// work around the crash some other way.
+    private var wordTable: some View {
+        Table(visibleWords) {
+            TableColumn("Word") { word in
+                WordNameCell(word: word, store: store)
+            }
+            TableColumn("Phonetic") { word in
+                Text(word.phonetic ?? "")
+            }
+            TableColumn("Translation") { word in
+                Text(word.translation ?? "")
+            }
+            TableColumn("Part of speech") { word in
+                Text(word.partOfSpeech ?? "")
+            }
+            TableColumn("Count") { word in
+                Text("\(word.count)")
+            }
+        }
+        .contextMenu(forSelectionType: Word.ID.self) { ids in
+            Button("Delete", role: .destructive) {
+                for word in visibleWords where ids.contains(word.id) {
+                    store.delete(word)
+                }
+            }
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "text.book.closed")
+                .font(.system(size: 36))
+                .foregroundStyle(AppColor.textSecondary)
+            Text(store.words.isEmpty ? "No words yet" : "No matches")
+                .foregroundStyle(AppColor.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AppColor.background)
     }
 
     private func exportCSV() {

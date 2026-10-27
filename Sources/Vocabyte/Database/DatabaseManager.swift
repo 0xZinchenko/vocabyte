@@ -116,13 +116,16 @@ final class DatabaseManager {
         }
     }
 
-    /// All saved words, newest-updated first. The word list UI re-sorts and
-    /// filters this in memory rather than via separate queries, since a
-    /// personal vocabulary is small enough that there's no need to push
-    /// that work down to SQLite.
+    /// All saved words, newest-captured first (by `createdAt`, not
+    /// `updatedAt`) — so a word's position in this default order stays put
+    /// when it's edited, re-translated, or its repeat count changes; only
+    /// capturing it for the first time changes where it sits. The word list
+    /// UI re-sorts and filters this in memory rather than via separate
+    /// queries, since a personal vocabulary is small enough that there's no
+    /// need to push that work down to SQLite.
     func allWords() throws -> [Word] {
         try dbQueue.read { db in
-            try Word.order(Column("updatedAt").desc).fetchAll(db)
+            try Word.order(Column("createdAt").desc).fetchAll(db)
         }
     }
 
@@ -131,7 +134,7 @@ final class DatabaseManager {
     /// without a manual refresh.
     func allWordsObservation() -> ValueObservation<ValueReducers.Fetch<[Word]>> {
         ValueObservation.tracking { db in
-            try Word.order(Column("updatedAt").desc).fetchAll(db)
+            try Word.order(Column("createdAt").desc).fetchAll(db)
         }
     }
 
