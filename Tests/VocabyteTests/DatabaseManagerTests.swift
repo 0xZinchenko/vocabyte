@@ -216,4 +216,43 @@ final class DatabaseManagerTests: XCTestCase {
         XCTAssertEqual(word.translation, "яблоко")
         XCTAssertEqual(word.lookupStatus, .success)
     }
+
+    // MARK: - Word list
+
+    func testAllWordsOrdersByMostRecentlyUpdatedFirst() throws {
+        let db = try DatabaseManager.openInMemory()
+        _ = try db.saveWord(displayWord: "apple", normalizedWord: "apple", sentence: nil)
+        Thread.sleep(forTimeInterval: 0.01)
+        _ = try db.saveWord(displayWord: "banana", normalizedWord: "banana", sentence: nil)
+
+        let words = try db.allWords()
+        XCTAssertEqual(words.map(\.normalizedWord), ["banana", "apple"])
+    }
+
+    func testSetLearnedTogglesFlagAndBumpsUpdatedAt() throws {
+        let db = try DatabaseManager.openInMemory()
+        let id = insertedId(try db.saveWord(displayWord: "apple", normalizedWord: "apple", sentence: nil))
+        let originalUpdatedAt = try db.word(withId: id)!.updatedAt
+
+        Thread.sleep(forTimeInterval: 0.01)
+        try db.setLearned(id: id, learned: true)
+
+        let word = try db.word(withId: id)!
+        XCTAssertTrue(word.learned)
+        XCTAssertGreaterThan(word.updatedAt, originalUpdatedAt)
+
+        try db.setLearned(id: id, learned: false)
+        XCTAssertFalse(try db.word(withId: id)!.learned)
+    }
+
+    func testDeleteWordRemovesRowAndIsSafeToCallTwice() throws {
+        let db = try DatabaseManager.openInMemory()
+        let id = insertedId(try db.saveWord(displayWord: "apple", normalizedWord: "apple", sentence: nil))
+
+        try db.deleteWord(id: id)
+        XCTAssertNil(try db.word(withId: id))
+
+        // Deleting an already-gone row must not throw.
+        try db.deleteWord(id: id)
+    }
 }

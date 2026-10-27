@@ -1,0 +1,106 @@
+import SwiftUI
+
+enum WordListSort: String, CaseIterable, Identifiable {
+    case dateAdded = "Date"
+    case alphabetical = "A–Z"
+    case mostFrequent = "Most frequent"
+
+    var id: String { rawValue }
+}
+
+enum WordListFilter: String, CaseIterable, Identifiable {
+    case all = "All"
+    case active = "Active"
+    case learned = "Learned"
+
+    var id: String { rawValue }
+}
+
+struct WordListView: View {
+    @StateObject private var store = WordListStore()
+    @State private var searchText = ""
+    @State private var sort: WordListSort = .dateAdded
+    @State private var filter: WordListFilter = .active
+
+    private var visibleWords: [Word] {
+        var words = store.words
+
+        switch filter {
+        case .all:
+            break
+        case .active:
+            words = words.filter { !$0.learned }
+        case .learned:
+            words = words.filter(\.learned)
+        }
+
+        if !searchText.isEmpty {
+            words = words.filter {
+                $0.displayWord.localizedCaseInsensitiveContains(searchText)
+                    || ($0.translation?.localizedCaseInsensitiveContains(searchText) ?? false)
+            }
+        }
+
+        switch sort {
+        case .dateAdded:
+            break // allWords() is already newest-updated first.
+        case .alphabetical:
+            words.sort { $0.displayWord.localizedCaseInsensitiveCompare($1.displayWord) == .orderedAscending }
+        case .mostFrequent:
+            words.sort { $0.count > $1.count }
+        }
+
+        return words
+    }
+
+    var body: some View {
+        Table(visibleWords) {
+            TableColumn("Word") { word in
+                Toggle(isOn: Binding(
+                    get: { word.learned },
+                    set: { store.setLearned(word, learned: $0) }
+                )) {
+                    Text(word.displayWord)
+                }
+                .toggleStyle(.checkbox)
+            }
+            TableColumn("Phonetic") { word in
+                Text(word.phonetic ?? "")
+            }
+            TableColumn("Part of speech") { word in
+                Text(word.partOfSpeech ?? "")
+            }
+            TableColumn("Translation") { word in
+                Text(word.translation ?? "")
+            }
+            TableColumn("Count") { word in
+                Text("\(word.count)")
+            }
+        }
+        .contextMenu(forSelectionType: Word.ID.self) { ids in
+            Button("Delete", role: .destructive) {
+                for word in visibleWords where ids.contains(word.id) {
+                    store.delete(word)
+                }
+            }
+        }
+        .searchable(text: $searchText, prompt: "Search word or translation")
+        .frame(minWidth: 640, minHeight: 400)
+        .toolbar {
+            ToolbarItemGroup {
+                Picker("Filter", selection: $filter) {
+                    ForEach(WordListFilter.allCases) { filter in
+                        Text(filter.rawValue).tag(filter)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Picker("Sort", selection: $sort) {
+                    ForEach(WordListSort.allCases) { sort in
+                        Text(sort.rawValue).tag(sort)
+                    }
+                }
+            }
+        }
+    }
+}

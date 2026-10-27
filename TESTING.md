@@ -4,6 +4,28 @@ This checklist does not require any Swift knowledge. Run through it after
 each stage that touches the relevant area; not every item applies to every
 stage yet (see notes).
 
+## Stage 6: word list window
+
+- [ ] "Open List" in the menu bar opens a window showing saved words (word,
+      phonetic, part of speech, translation, repeat count).
+- [ ] The list updates live — saving a new word via the hotkey while the
+      window is open makes it appear without reopening the window, and a
+      background translation arriving fills in the Translation column live.
+- [ ] Checking the checkbox next to a word marks it learned; with the filter
+      set to "Active" it then disappears from the list, and reappears when
+      the filter is switched to "Learned" or "All".
+- [ ] Typing in the search field filters the list by word or translation
+      text.
+- [ ] The sort picker re-orders the list by date / alphabetically / by
+      repeat count as expected.
+- [ ] Right-clicking a row (or selecting several and right-clicking) offers
+      "Delete", and deleting removes the row from the database, not just the
+      visible list (confirm via `sqlite3` after reopening the window).
+
+Not yet manually tested — build and the automated test suite
+(`DatabaseManagerTests`: `allWords`, `setLearned`, `deleteWord`) pass, but no
+one has clicked through the actual window yet.
+
 ## Stage 5: dictionary and translation
 
 - [x] After saving a new word, phonetic transcription, part of speech, and

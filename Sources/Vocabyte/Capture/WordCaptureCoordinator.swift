@@ -13,7 +13,7 @@ final class WordCaptureCoordinator {
     private let database: DatabaseManager?
 
     private init() {
-        database = try? DatabaseManager.openDefault()
+        database = DatabaseManager.shared
         if database == nil {
             logger.error("Failed to open the database; captured words won't be saved.")
         }

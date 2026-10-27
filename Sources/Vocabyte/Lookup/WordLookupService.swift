@@ -21,7 +21,7 @@ final class WordLookupService {
     init(
         dictionaryProvider: DictionaryProvider = FreeDictionaryProvider(),
         translationProvider: TranslationProvider = MyMemoryTranslationProvider(),
-        database: DatabaseManager? = try? DatabaseManager.openDefault()
+        database: DatabaseManager? = DatabaseManager.shared
     ) {
         self.dictionaryProvider = dictionaryProvider
         self.translationProvider = translationProvider

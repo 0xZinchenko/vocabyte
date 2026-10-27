@@ -10,6 +10,13 @@ enum SaveResult: Equatable {
 }
 
 final class DatabaseManager {
+    /// The single connection to the on-disk database, shared by every part
+    /// of the app. Using one shared `DatabaseQueue` (rather than each
+    /// component opening its own) is required for `allWordsObservation()`
+    /// to see writes made elsewhere: GRDB only notifies a `ValueObservation`
+    /// about changes committed through the same connection it's observing.
+    static let shared = try? DatabaseManager.openDefault()
+
     let dbQueue: DatabaseQueue
 
     init(dbQueue: DatabaseQueue) throws {
@@ -106,6 +113,40 @@ final class DatabaseManager {
     func word(withId id: Int64) throws -> Word? {
         try dbQueue.read { db in
             try Word.filter(Column("id") == id).fetchOne(db)
+        }
+    }
+
+    /// All saved words, newest-updated first. The word list UI re-sorts and
+    /// filters this in memory rather than via separate queries, since a
+    /// personal vocabulary is small enough that there's no need to push
+    /// that work down to SQLite.
+    func allWords() throws -> [Word] {
+        try dbQueue.read { db in
+            try Word.order(Column("updatedAt").desc).fetchAll(db)
+        }
+    }
+
+    /// A live-updating observation of `allWords()`, used by the word list
+    /// window so it reflects new captures and background lookup results
+    /// without a manual refresh.
+    func allWordsObservation() -> ValueObservation<ValueReducers.Fetch<[Word]>> {
+        ValueObservation.tracking { db in
+            try Word.order(Column("updatedAt").desc).fetchAll(db)
+        }
+    }
+
+    func setLearned(id: Int64, learned: Bool) throws {
+        try dbQueue.write { db in
+            guard var word = try Word.filter(Column("id") == id).fetchOne(db) else { return }
+            word.learned = learned
+            word.updatedAt = Date()
+            try word.update(db)
+        }
+    }
+
+    func deleteWord(id: Int64) throws {
+        _ = try dbQueue.write { db in
+            try Word.deleteOne(db, key: id)
         }
     }
 

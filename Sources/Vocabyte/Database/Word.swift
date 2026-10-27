@@ -8,7 +8,7 @@ enum LookupStatus: String, Codable, DatabaseValueConvertible {
     case failed
 }
 
-struct Word: Codable, Equatable, FetchableRecord, MutablePersistableRecord {
+struct Word: Codable, Equatable, Identifiable, FetchableRecord, MutablePersistableRecord {
     static let databaseTableName = "word"
 
     var id: Int64?
