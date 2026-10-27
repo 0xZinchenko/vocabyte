@@ -8,10 +8,9 @@ import os
 final class WordLookupService {
     static let shared = WordLookupService()
 
-    /// Default target language. Not yet configurable — Settings (a later
-    /// stage) will let the user pick "ru" or "uk"; this matches the spec's
-    /// stated default in the meantime.
-    private let translationLanguage = "ru"
+    /// Read fresh on every lookup (not cached at init) so a change made in
+    /// Settings while the app is running takes effect immediately.
+    private var translationLanguage: String { AppPreferences.translationLanguage.rawValue }
 
     private let dictionaryProvider: DictionaryProvider
     private let translationProvider: TranslationProvider
@@ -43,9 +42,10 @@ final class WordLookupService {
 
         async let dictionaryTask: DictionaryLookupResult? = try? dictionaryProvider.lookup(word: text)
 
+        let targetLanguage = translationLanguage
         let translation: String?
         do {
-            translation = try await translationProvider.translate(text, to: translationLanguage)
+            translation = try await translationProvider.translate(text, to: targetLanguage)
         } catch {
             logger.notice("Translation failed for \"\(text, privacy: .public)\": \(error.localizedDescription, privacy: .public)")
             translation = nil
@@ -60,7 +60,7 @@ final class WordLookupService {
                 phonetic: dictionary?.phonetic,
                 partOfSpeech: dictionary?.partOfSpeech,
                 translation: translation,
-                translationLang: succeeded ? translationLanguage : nil,
+                translationLang: succeeded ? targetLanguage : nil,
                 succeeded: succeeded
             )
             logger.notice("Lookup \(succeeded ? "succeeded" : "failed", privacy: .public) for \"\(text, privacy: .public)\"")

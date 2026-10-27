@@ -4,6 +4,25 @@ This checklist does not require any Swift knowledge. Run through it after
 each stage that touches the relevant area; not every item applies to every
 stage yet (see notes).
 
+## Stage 7: settings and CSV export
+
+- [ ] "Settings" in the menu bar opens a window with a translation language
+      picker (Russian/Ukrainian) and a hotkey recorder.
+- [ ] Changing the translation language and then saving a new word uses the
+      new language for its translation.
+- [ ] Clicking the hotkey recorder and pressing a new key combo rebinds the
+      save hotkey — the old combo stops working, the new one saves a word.
+- [ ] In the word list window, "Export to CSV…" opens a save panel; picking
+      a location writes a `.csv` file.
+- [ ] The exported CSV opens in Excel/Numbers with Cyrillic translations
+      displayed correctly (not mangled/question marks).
+- [ ] Exporting while a search/filter is active in the word list still
+      exports every word, not just the visible/filtered ones.
+
+Not yet manually tested — build and the automated test suite
+(`CSVExporterTests`) pass, but no one has clicked through Settings or
+exported a real file yet.
+
 ## Stage 6: word list window
 
 - [ ] "Open List" in the menu bar opens a window showing saved words (word,

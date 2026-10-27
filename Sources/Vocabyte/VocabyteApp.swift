@@ -18,7 +18,7 @@ struct VocabyteApp: App {
                 openWindow(id: "wordList")
             }
             Button("Settings") {
-                // Placeholder — implemented in a later stage.
+                openWindow(id: "settings")
             }
             Divider()
             Button("Quit") {
@@ -29,6 +29,10 @@ struct VocabyteApp: App {
 
         Window("Word List", id: "wordList") {
             WordListView()
+        }
+
+        Window("Settings", id: "settings") {
+            SettingsView()
         }
     }
 }

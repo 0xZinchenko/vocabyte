@@ -1,4 +1,6 @@
+import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 enum WordListSort: String, CaseIterable, Identifiable {
     case dateAdded = "Date"
@@ -21,6 +23,7 @@ struct WordListView: View {
     @State private var searchText = ""
     @State private var sort: WordListSort = .dateAdded
     @State private var filter: WordListFilter = .active
+    @State private var exportError: String?
 
     private var visibleWords: [Word] {
         var words = store.words
@@ -100,7 +103,34 @@ struct WordListView: View {
                         Text(sort.rawValue).tag(sort)
                     }
                 }
+
+                Button {
+                    exportCSV()
+                } label: {
+                    Label("Export to CSV…", systemImage: "square.and.arrow.up")
+                }
             }
+        }
+        .alert("Export failed", isPresented: Binding(
+            get: { exportError != nil },
+            set: { if !$0 { exportError = nil } }
+        )) {
+            Button("OK") { exportError = nil }
+        } message: {
+            Text(exportError ?? "")
+        }
+    }
+
+    private func exportCSV() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "vocabyte-export.csv"
+        panel.allowedContentTypes = [.commaSeparatedText]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            try CSVExporter.write(store.words, to: url)
+        } catch {
+            exportError = error.localizedDescription
         }
     }
 }
