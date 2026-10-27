@@ -13,7 +13,7 @@ struct VocabyteApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("Vocabyte", systemImage: "character.book.closed") {
+        MenuBarExtra("Vocabyte", image: "MenuBarIcon") {
             Button("Open List") {
                 openWindow(id: "wordList")
             }
