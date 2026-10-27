@@ -29,6 +29,7 @@ struct VocabyteApp: App {
 
         Window("Word List", id: "wordList") {
             WordListView()
+                .appTheme()
         }
 
         Window("Settings", id: "settings") {
