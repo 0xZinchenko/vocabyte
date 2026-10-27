@@ -70,11 +70,11 @@ struct WordListView: View {
             TableColumn("Phonetic") { word in
                 Text(word.phonetic ?? "")
             }
-            TableColumn("Part of speech") { word in
-                Text(word.partOfSpeech ?? "")
-            }
             TableColumn("Translation") { word in
                 Text(word.translation ?? "")
+            }
+            TableColumn("Part of speech") { word in
+                Text(word.partOfSpeech ?? "")
             }
             TableColumn("Count") { word in
                 Text("\(word.count)")
