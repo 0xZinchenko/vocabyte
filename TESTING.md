@@ -4,6 +4,19 @@ This checklist does not require any Swift knowledge. Run through it after
 each stage that touches the relevant area; not every item applies to every
 stage yet (see notes).
 
+## Stage 8: launch at login
+
+- [ ] Turning on "Launch at login" in Settings, then checking System
+      Settings → General → Login Items & Extensions, shows Vocabyte listed
+      there.
+- [ ] Restarting the Mac with it turned on launches Vocabyte automatically
+      (icon appears in the menu bar without opening it manually).
+- [ ] Turning it off removes it from Login Items and it no longer
+      auto-launches on restart.
+- [ ] Reopening Settings after toggling shows the correct current state
+      (not stale) — it reads the real login-item status each time, not a
+      separately stored preference.
+
 ## Word list: inline rename (fixes capture mistakes)
 
 - [ ] Double-clicking/editing the word text in the list, typing a correction
