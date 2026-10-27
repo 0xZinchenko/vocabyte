@@ -255,4 +255,58 @@ final class DatabaseManagerTests: XCTestCase {
         // Deleting an already-gone row must not throw.
         try db.deleteWord(id: id)
     }
+
+    func testRenameWordUpdatesTextAndResetsLookupData() throws {
+        let db = try DatabaseManager.openInMemory()
+        let id = insertedId(try db.saveWord(displayWord: "ocal", normalizedWord: "ocal", sentence: nil))
+        try db.recordLookupResult(
+            wordId: id, phonetic: nil, partOfSpeech: nil,
+            translation: "ocal", translationLang: "ru", succeeded: true
+        )
+
+        let result = try db.renameWord(id: id, displayWord: "local", normalizedWord: "local")
+        XCTAssertEqual(result, .renamed)
+
+        let word = try db.word(withId: id)!
+        XCTAssertEqual(word.displayWord, "local")
+        XCTAssertEqual(word.normalizedWord, "local")
+        XCTAssertNil(word.translation, "stale translation for the old, wrong text must be cleared")
+        XCTAssertEqual(word.lookupStatus, .pending, "needs a fresh lookup for the corrected text")
+    }
+
+    func testRenameToSameNormalizedWordOnlyFixesCasingAndKeepsLookupData() throws {
+        let db = try DatabaseManager.openInMemory()
+        let id = insertedId(try db.saveWord(displayWord: "Apple", normalizedWord: "apple", sentence: nil))
+        try db.recordLookupResult(
+            wordId: id, phonetic: "ˈæpəl", partOfSpeech: "noun",
+            translation: "яблоко", translationLang: "ru", succeeded: true
+        )
+
+        let result = try db.renameWord(id: id, displayWord: "apple", normalizedWord: "apple")
+        XCTAssertEqual(result, .renamed)
+
+        let word = try db.word(withId: id)!
+        XCTAssertEqual(word.displayWord, "apple")
+        XCTAssertEqual(word.translation, "яблоко", "a casing-only fix shouldn't throw away data already found for this word")
+        XCTAssertEqual(word.lookupStatus, .success)
+    }
+
+    func testRenameToAnExistingWordMergesAndDeletesTheEditedRow() throws {
+        let db = try DatabaseManager.openInMemory()
+        let localId = insertedId(try db.saveWord(displayWord: "local", normalizedWord: "local", sentence: "Keep it local."))
+        try db.recordLookupResult(
+            wordId: localId, phonetic: "ˈləʊkl̩", partOfSpeech: "adjective",
+            translation: "местный", translationLang: "ru", succeeded: true
+        )
+        let typoId = insertedId(try db.saveWord(displayWord: "ocal", normalizedWord: "ocal", sentence: nil))
+
+        let result = try db.renameWord(id: typoId, displayWord: "local", normalizedWord: "local")
+        XCTAssertEqual(result, .mergedIntoExisting(existingId: localId))
+
+        XCTAssertNil(try db.word(withId: typoId), "the edited row is merged away, not left behind as a duplicate")
+        let merged = try db.word(withId: localId)!
+        XCTAssertEqual(merged.count, 2, "both saves of what turned out to be the same word are counted")
+        XCTAssertEqual(merged.translation, "местный", "the existing word's own lookup data is kept, not overwritten")
+        XCTAssertEqual(merged.sentence, "Keep it local.")
+    }
 }

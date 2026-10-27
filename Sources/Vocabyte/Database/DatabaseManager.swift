@@ -150,6 +150,62 @@ final class DatabaseManager {
         }
     }
 
+    enum RenameResult: Equatable {
+        /// The word's text changed; dictionary/translation data was reset
+        /// and a fresh lookup for `id` is needed.
+        case renamed
+        /// The corrected text matches a word that was already saved under a
+        /// different row — the edited row was merged into it (count summed,
+        /// sentence backfilled if missing) and deleted. No new lookup is
+        /// needed: `existingId` already has its own lookup data.
+        case mergedIntoExisting(existingId: Int64)
+    }
+
+    /// Corrects a saved word's text — used by the word list UI to fix a
+    /// capture mistake (a dropped letter, a stray trailing bracket) without
+    /// deleting and re-saving the word.
+    func renameWord(id: Int64, displayWord: String, normalizedWord: String) throws -> RenameResult {
+        try dbQueue.write { db in
+            guard var word = try Word.filter(Column("id") == id).fetchOne(db) else {
+                return .renamed
+            }
+
+            // A casing-only correction doesn't change what the word *is* —
+            // keep the dictionary/translation data already found for it.
+            if normalizedWord == word.normalizedWord {
+                word.displayWord = displayWord
+                word.updatedAt = Date()
+                try word.update(db)
+                return .renamed
+            }
+
+            if var existing = try Word
+                .filter(Column("normalizedWord") == normalizedWord && Column("id") != id)
+                .fetchOne(db)
+            {
+                existing.count += word.count
+                existing.updatedAt = Date()
+                if (existing.sentence?.isEmpty ?? true), let sentence = word.sentence, !sentence.isEmpty {
+                    existing.sentence = sentence
+                }
+                try existing.update(db)
+                try Word.deleteOne(db, key: id)
+                return .mergedIntoExisting(existingId: existing.id!)
+            }
+
+            word.displayWord = displayWord
+            word.normalizedWord = normalizedWord
+            word.phonetic = nil
+            word.partOfSpeech = nil
+            word.translation = nil
+            word.translationLang = nil
+            word.lookupStatus = .pending
+            word.updatedAt = Date()
+            try word.update(db)
+            return .renamed
+        }
+    }
+
     /// Words whose translation hasn't been fetched successfully yet —
     /// `pending` (never tried) or `failed` (tried and hit a network/API
     /// error). Dictionary data (phonetic/part of speech) is best-effort and

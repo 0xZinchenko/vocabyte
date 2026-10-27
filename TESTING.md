@@ -4,6 +4,18 @@ This checklist does not require any Swift knowledge. Run through it after
 each stage that touches the relevant area; not every item applies to every
 stage yet (see notes).
 
+## Word list: inline rename (fixes capture mistakes)
+
+- [ ] Double-clicking/editing the word text in the list, typing a correction
+      (e.g. "ocal" → "local"), and pressing Return updates the word and
+      triggers a fresh phonetic/translation lookup for the corrected text.
+- [ ] Renaming a word to text that's just a different casing of itself
+      (e.g. "Apple" → "apple") keeps its existing phonetic/translation
+      instead of re-fetching them.
+- [ ] Renaming a word to match another word already in the list merges them
+      into one row (combined repeat count, the existing row's own lookup
+      data kept) instead of leaving a duplicate.
+
 ## Stage 7: settings and CSV export
 
 - [ ] "Settings" in the menu bar opens a window with a translation language

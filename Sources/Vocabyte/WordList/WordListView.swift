@@ -18,6 +18,41 @@ enum WordListFilter: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// The word list's editable name cell: a learned checkbox plus a text field
+/// that lets the user correct a capture mistake (a dropped letter, a stray
+/// bracket) in place, without deleting and re-saving the word.
+private struct WordNameCell: View {
+    let word: Word
+    let store: WordListStore
+
+    @State private var text: String
+
+    init(word: Word, store: WordListStore) {
+        self.word = word
+        self.store = store
+        _text = State(initialValue: word.displayWord)
+    }
+
+    var body: some View {
+        HStack {
+            Toggle(isOn: Binding(
+                get: { word.learned },
+                set: { store.setLearned(word, learned: $0) }
+            )) {
+                EmptyView()
+            }
+            .toggleStyle(.checkbox)
+            .labelsHidden()
+
+            TextField("Word", text: $text)
+                .textFieldStyle(.plain)
+                .onSubmit {
+                    store.rename(word, to: text)
+                }
+        }
+    }
+}
+
 struct WordListView: View {
     @StateObject private var store = WordListStore()
     @State private var searchText = ""
@@ -59,13 +94,7 @@ struct WordListView: View {
     var body: some View {
         Table(visibleWords) {
             TableColumn("Word") { word in
-                Toggle(isOn: Binding(
-                    get: { word.learned },
-                    set: { store.setLearned(word, learned: $0) }
-                )) {
-                    Text(word.displayWord)
-                }
-                .toggleStyle(.checkbox)
+                WordNameCell(word: word, store: store)
             }
             TableColumn("Phonetic") { word in
                 Text(word.phonetic ?? "")

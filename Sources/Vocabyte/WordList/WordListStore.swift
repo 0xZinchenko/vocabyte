@@ -46,4 +46,29 @@ final class WordListStore: ObservableObject {
             logger.error("Failed to delete word: \(error.localizedDescription, privacy: .public)")
         }
     }
+
+    /// Corrects a capture mistake (a dropped letter, a stray bracket) by
+    /// editing the word's text in place. Invalid edits (empty, too long) are
+    /// silently ignored rather than reverting the text field, since this is
+    /// a quick inline fix, not a full save flow with its own feedback UI.
+    func rename(_ word: Word, to newDisplayWord: String) {
+        guard let id = word.id, let database else { return }
+        guard case .accepted(let displayWord, let normalizedWord) = WordNormalizer.normalize(newDisplayWord) else {
+            return
+        }
+        guard normalizedWord != word.normalizedWord || displayWord != word.displayWord else {
+            return
+        }
+
+        do {
+            switch try database.renameWord(id: id, displayWord: displayWord, normalizedWord: normalizedWord) {
+            case .renamed:
+                Task { await WordLookupService.shared.lookup(wordId: id, text: displayWord) }
+            case .mergedIntoExisting:
+                break // The row this merged into already has its own lookup data.
+            }
+        } catch {
+            logger.error("Failed to rename word: \(error.localizedDescription, privacy: .public)")
+        }
+    }
 }
